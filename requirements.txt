@@ -7,7 +7,6 @@ numpy==1.26.4
 openai==1.107.3
 yt_dlp==2025.9.5
 faster_whisper==1.2.0
-fastapi==0.114.0
+fastapi
 uvicorn[standard]==0.30.6
 azure-storage-blob==12.20.0
-pydantic==2.8.2 ###

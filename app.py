@@ -9,6 +9,11 @@ from openai import AzureOpenAI  # official OpenAI SDK, works with Azure endpoint
 import json
 import subprocess
 import Youtubetranscription_summarizer
+from extractor.app.Youtubeextraction import extract  # Youtube download helper functions 
+from pydantic import BaseModel, AnyUrl # Pydantic models for request validation in yiutube extraction
+from fastapi import FastAPI, HTTPException # FastAPI for building the API
+app = FastAPI() ## Initialize FastAPI app for testing in local
+#from extractor.app.storage import upload_and_sign  # Youtube storage helper functions
 import re
 
 # --- LLM call (Azure OpenAI with API key) -----------------------------------
@@ -129,12 +134,47 @@ def download_to_temp_mp3(url: str) -> str:
                 tmp.write(chunk)
         return tmp.name
 
+# function to read files
+def file_read(filepath):
+    file_data = []
+            
+    try:
+        with open(filepath, "rb") as f:
+            file_data = f.read()
+            
+            print(f"Successfully validated {file_path} and read {len(file_data)} bytes.")
+    except Exception as e:
+                print(f"Could not read {file_path}: {e}")
 
+    return file_data
+
+###Download youtube video and extract audio using yt-dlp and ffmpeg
+
+EXTRACT_API = os.getenv("AZURE_CONTAINER_APP") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
+def fetch_audio_from_youtube(url):
+    
+    try:    
+        r = requests.post(EXTRACT_API, json={
+            "url": url,
+            "format": "wav",
+            "sample_rate": 16000,
+            "mono": True
+        }, timeout=90)
+        r.raise_for_status()
+        return r.json()["audio_url"]
+    
+    except Exception as e:
+        print(f"{datetime.now()}: Error retrieving youtube wave file: {url} from Azure instance: {str(e)}")
+        return (f"{datetime.now()}: Error retrieving youtube wave file from Azure instance : {url}")
+        
 def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
     tmp_to_cleanup = []
     audio_b64 = None
     text_input = None
     domaincheck = None
+    extract_input = None
+    audio_wav = None
+
     try:
         # Capture start time for logging
         Starttime = datetime.now(),
@@ -158,7 +198,16 @@ def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
                 
                 if CheckURL:
                     # Get the transcription from youtube
-                    text_input = Youtubetranscription_summarizer.main(url.strip()) # Youtube files are transcribed and summarized
+                    # text_input = Youtubetranscription_summarizer.main(url.strip()) # Youtube files are transcribed and summarized
+                    extract_input = extract(url.strip()) # Youtube files are extracted from Azure instance.
+                    # Test wav file transcription using faster-whisper
+                    audio_wav = fetch_audio_from_youtube(extract_input['audio_url'])
+                    #file_path = "/Users/sayedarizvi/AudioSummarizer/Data/test.wav"
+                    #audio_wav = file_path
+                    text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_wav, model_name="base.en")
+                    #text_input = transcript['segments']
+                    #audio_path = text_input['audio_filepath']
+                    #tmp_to_cleanup.append(text_input)
                     tmp_to_cleanup.append(text_input)
                 else:   
                     audio_path = download_to_temp_mp3(url.strip())
