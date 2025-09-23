@@ -10,9 +10,9 @@ import json
 import subprocess
 import Youtubetranscription_summarizer
 from extractor.app.Youtubeextraction import extract  # Youtube download helper functions 
-from pydantic import BaseModel, AnyUrl # Pydantic models for request validation in yiutube extraction
-from fastapi import FastAPI, HTTPException # FastAPI for building the API
-app = FastAPI() ## Initialize FastAPI app for testing in local
+#from pydantic import BaseModel, AnyUrl # Pydantic models for request validation in yiutube extraction
+#from fastapi import FastAPI, HTTPException # FastAPI for building the API
+#app = FastAPI() ## Initialize FastAPI app for testing in local
 #from extractor.app.storage import upload_and_sign  # Youtube storage helper functions
 import re
 

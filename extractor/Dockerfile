@@ -22,4 +22,5 @@ ENV AZURE_BLOB_CONTAINER=__SET_AT_DEPLOY__
 #ENV FFMPEG_BIN=ffmpeg
 
 EXPOSE 8080
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+#CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.Youtubeextraction:app", "--host", "0.0.0.0", "--port", "8080"]
