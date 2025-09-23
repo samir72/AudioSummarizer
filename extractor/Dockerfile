@@ -19,6 +19,9 @@ COPY app /app/Youtubeextraction
 WORKDIR /utils
 COPY utils /utils/storage
 
+# Resetting back to app
+WORKDIR /app
+
 ENV HOST=0.0.0.0 PORT=8080
 ENV AZURE_STORAGE_ACCOUNT=__SET_AT_DEPLOY__
 ENV AZURE_BLOB_CONTAINER=__SET_AT_DEPLOY__
