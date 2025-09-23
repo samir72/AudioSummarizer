@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, Callable, Any
 import yt_dlp
 # from utils.storage import upload_and_sign   # To remove circular import issue
-from extractor.utils.storage import upload_and_sign   # To remove circular import issue
+from app.utils.storage import upload_and_sign   # To remove circular import issue
 
 app = FastAPI()
 

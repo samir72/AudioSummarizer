@@ -9,7 +9,7 @@ from openai import AzureOpenAI  # official OpenAI SDK, works with Azure endpoint
 import json
 import subprocess
 import Youtubetranscription_summarizer
-from extractor.app.Youtubeextraction import extract  # Youtube download helper functions 
+from app.app.Youtubeextraction import extract  # Youtube download helper functions 
 #from pydantic import BaseModel, AnyUrl # Pydantic models for request validation in yiutube extraction
 #from fastapi import FastAPI, HTTPException # FastAPI for building the API
 #app = FastAPI() ## Initialize FastAPI app for testing in local
