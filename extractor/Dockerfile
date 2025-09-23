@@ -11,7 +11,10 @@ RUN pip install --no-cache-dir yt-dlp
 # App dependencies
 WORKDIR /app
 #Copy the contents of the extractor directory into the container
-COPY ./extractor /app/
+#COPY ./extractor /app/
+COPY . /app
+#COPY app/Youtubeextraction ./
+#COPY utils/storage ./
 # Install Python dependencies from requirements.txt
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
