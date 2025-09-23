@@ -150,7 +150,7 @@ def file_read(filepath):
 
 ###Download youtube video and extract audio using yt-dlp and ffmpeg
 
-EXTRACT_API = os.getenv("AZURE_CONTAINER_APP") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
+EXTRACT_API = os.getenv("AZURE_CONTAINER_APP_FQDN") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
 def fetch_audio_from_youtube(url):
     
     try:    
