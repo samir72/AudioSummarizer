@@ -18,8 +18,8 @@ COPY app /app/app
 ENV HOST=0.0.0.0 PORT=8080
 ENV AZURE_STORAGE_ACCOUNT=__SET_AT_DEPLOY__
 ENV AZURE_BLOB_CONTAINER=__SET_AT_DEPLOY__
-ENV YTDLP_BIN=yt-dlp
-ENV FFMPEG_BIN=ffmpeg
+#ENV YTDLP_BIN=yt-dlp
+#ENV FFMPEG_BIN=ffmpeg
 
 EXPOSE 8080
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
