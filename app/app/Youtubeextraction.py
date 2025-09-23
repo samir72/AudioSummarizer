@@ -183,4 +183,5 @@ def extract(
         except Exception:
             pass
     
-    return {"status": "ready", "audio_url": signed}
+    #return {"status": "ready", "audio_url": signed}
+    return signed

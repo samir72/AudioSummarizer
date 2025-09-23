@@ -151,7 +151,7 @@ def file_read(filepath):
 ###Download youtube video and extract audio using yt-dlp and ffmpeg
 
 EXTRACT_API = os.getenv("AZURE_CONTAINER_APP_FQDN") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
-def fetch_audio_from_youtube(url):
+""" def fetch_audio_from_youtube(url):
     
     try:    
         r = requests.post(EXTRACT_API, json={
@@ -165,7 +165,63 @@ def fetch_audio_from_youtube(url):
     
     except Exception as e:
         print(f"{datetime.now()}: Error retrieving youtube wave file: {url} from Azure instance: {str(e)}")
-        return (f"{datetime.now()}: Error retrieving youtube wave file from Azure instance : {url}")
+        return (f"{datetime.now()}: Error retrieving youtube wave file from Azure instance : {url}") """
+
+#### Fixing code to resolve 404 error
+
+def fetch_audio_from_youtube(youtube_url: str) -> str:
+    """
+    Calls the extractor service and returns the signed audio URL.
+    - Tries POST /extract with youtube_url as a query param (your current server shape).
+    - Falls back to sending youtube_url in JSON body if needed.
+    - Accepts either JSON {"audio_url": "..."} or a plain string URL.
+    """
+    base = EXTRACT_API.rstrip("/")
+    endpoint = base if base.endswith("/extract") else f"{base}/extract"
+
+    payload = {"format": "wav", "sample_rate": 16000, "mono": True}
+    timeout = 90
+
+    try:
+        # 1) Preferred: youtube_url as QUERY PARAM (matches your current API)
+        r = requests.post(endpoint, params={"youtube_url": youtube_url},
+                          json=payload, timeout=timeout)
+        if r.status_code == 404 or r.status_code == 422:
+            # 2) Fallback: youtube_url in JSON body (if your API switches later)
+            body = {"youtube_url": youtube_url, **payload}
+            r = requests.post(endpoint, json=body, timeout=timeout)
+
+        if r.status_code >= 400:
+            # log details instead of raising blindly
+            print("STATUS:", r.status_code)
+            print("HEADERS:", r.headers)
+            print("BODY:", r.text[:2000])
+            r.raise_for_status()
+
+        # Response parsing: support dict or plain string
+        ctype = r.headers.get("Content-Type", "")
+        if "application/json" in ctype:
+            data = r.json()
+            # If server validates response_model to dict
+            if isinstance(data, dict) and "audio_url" in data:
+                return data["audio_url"]
+            # If server returns plain string in JSON (rare)
+            if isinstance(data, str):
+                return data
+            raise ValueError(f"Unexpected JSON shape: {data}")
+        else:
+            # Plain text URL response_model=str
+            text = r.text.strip()
+            if text.startswith("http"):
+                return text
+            raise ValueError(f"Unexpected text response: {text[:200]}")
+
+    except Exception as e:
+        msg = (f"{datetime.now()}: Error retrieving youtube wave file from Azure instance. "
+               f"url={youtube_url} endpoint={endpoint} err={e}")
+        print(msg)
+        return msg
+
         
 def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
     tmp_to_cleanup = []
@@ -201,7 +257,8 @@ def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
                     # text_input = Youtubetranscription_summarizer.main(url.strip()) # Youtube files are transcribed and summarized
                     extract_input = extract(url.strip()) # Youtube files are extracted from Azure instance.
                     # Test wav file transcription using faster-whisper
-                    audio_wav = fetch_audio_from_youtube(extract_input['audio_url'])
+                    #audio_wav = fetch_audio_from_youtube(extract_input['audio_url'])
+                    audio_wav = fetch_audio_from_youtube(extract_input)
                     #file_path = "/Users/sayedarizvi/AudioSummarizer/Data/test.wav"
                     #audio_wav = file_path
                     text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_wav, model_name="base.en")
