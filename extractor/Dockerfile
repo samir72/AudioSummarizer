@@ -13,7 +13,8 @@ WORKDIR /app
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app /app/app
+#COPY app /app/app
+COPY app /app/Youtubeextraction
 
 ENV HOST=0.0.0.0 PORT=8080
 ENV AZURE_STORAGE_ACCOUNT=__SET_AT_DEPLOY__
