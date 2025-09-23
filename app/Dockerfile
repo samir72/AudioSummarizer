@@ -1,37 +1,36 @@
+# ---------- Base ----------
 FROM python:3.11-slim
 
-# System deps
+# ---------- System deps ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg curl ca-certificates git \
-    && rm -rf /var/lib/apt/lists/*
+    ffmpeg ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install yt-dlp (kept fresh)
-RUN pip install --no-cache-dir yt-dlp
+# ---------- Workdir ----------
+WORKDIR /workspace
 
-# App dependencies
-WORKDIR /app
-#Copy the contents of the extractor directory into the container
-#COPY ./extractor /app/
-COPY . /app
-#COPY app/Youtubeextraction ./
-#COPY utils/storage ./
-# Install Python dependencies from requirements.txt
-COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# ---------- Python deps ----------
+# requirements.txt is at AUDIOSUMMARIZER/app/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r /tmp/requirements.txt \
+ # ensure yt-dlp available even if not pinned
+ && pip install --no-cache-dir yt-dlp
 
-#COPY app /app/app
-#COPY app /app/Youtubeextraction
-#Copy storage py from folder outside app
-#WORKDIR /utils
-#COPY utils /utils/storage
+# ---------- App code ----------
+# Copy EVERYTHING under AUDIOSUMMARIZER/app (includes subfolders: app/ and utils/)
+COPY . /workspace/app
 
+# Make /workspace importable so "app.app.Youtubeextraction" & "app.utils..." work
+ENV PYTHONPATH=/workspace
 
-ENV HOST=0.0.0.0 PORT=8080
+# Runtime env (override at deploy)
+ENV HOST=0.0.0.0
+ENV PORT=8080
 ENV AZURE_STORAGE_ACCOUNT=__SET_AT_DEPLOY__
 ENV AZURE_BLOB_CONTAINER=__SET_AT_DEPLOY__
-#ENV YTDLP_BIN=yt-dlp
-#ENV FFMPEG_BIN=ffmpeg
 
 EXPOSE 8080
-#CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
-CMD ["uvicorn", "app.Youtubeextraction:app", "--host", "0.0.0.0", "--port", "8080"]
+
+# Your ASGI app is defined in app/app/Youtubeextraction.py as `app = FastAPI()`
+CMD ["uvicorn", "app.app.Youtubeextraction:app", "--host", "0.0.0.0", "--port", "8080"]
