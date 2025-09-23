@@ -8,19 +8,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install yt-dlp (kept fresh)
 RUN pip install --no-cache-dir yt-dlp
 
-# App deps
+# App dependencies
 WORKDIR /app
+#Copy the contents of the extractor directory into the container
+COPY ./extractor /app/
+# Install Python dependencies from requirements.txt
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 #COPY app /app/app
-COPY app /app/Youtubeextraction
+#COPY app /app/Youtubeextraction
 #Copy storage py from folder outside app
-WORKDIR /utils
-COPY utils /utils/storage
+#WORKDIR /utils
+#COPY utils /utils/storage
 
-# Resetting back to app
-WORKDIR /app
 
 ENV HOST=0.0.0.0 PORT=8080
 ENV AZURE_STORAGE_ACCOUNT=__SET_AT_DEPLOY__
