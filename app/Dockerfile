@@ -11,11 +11,15 @@ WORKDIR /workspace
 
 # ---------- Python deps ----------
 # requirements.txt is at AUDIOSUMMARIZER/app/requirements.txt
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip \
- && pip install --no-cache-dir -r /tmp/requirements.txt \
+#COPY requirements.txt /tmp/requirements.txt
+#RUN pip install --no-cache-dir --upgrade pip \
+# && pip install --no-cache-dir -r /tmp/requirements.txt \
  # ensure yt-dlp available even if not pinned
- && pip install --no-cache-dir yt-dlp
+# && pip install --no-cache-dir yt-dlp
+
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+&& pip install --no-cache-dir -r requirements.txt
 
 # ---------- App code ----------
 # Copy EVERYTHING under AUDIOSUMMARIZER/app (includes subfolders: app/ and utils/)
