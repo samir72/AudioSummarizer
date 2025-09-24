@@ -29,6 +29,7 @@ def summarize_input(audio_b64: str = None, text_input: str = None, sys_prompt: s
     deployment = os.getenv("AC_MODEL_DEPLOYMENT")
     api_version = os.getenv("AC_OPENAI_API_VERSION")
 
+
     if not endpoint or not api_key or not deployment:
         return "Server misconfiguration: required env vars missing."
     # Reset json_text for logging
@@ -149,24 +150,6 @@ def file_read(filepath):
     return file_data
 
 ###Download youtube video and extract audio using yt-dlp and ffmpeg
-
-EXTRACT_API = os.getenv("AZURE_CONTAINER_APP_FQDN") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
-""" def fetch_audio_from_youtube(url):
-    
-    try:    
-        r = requests.post(EXTRACT_API, json={
-            "url": url,
-            "format": "wav",
-            "sample_rate": 16000,
-            "mono": True
-        }, timeout=90)
-        r.raise_for_status()
-        return r.json()["audio_url"]
-    
-    except Exception as e:
-        print(f"{datetime.now()}: Error retrieving youtube wave file: {url} from Azure instance: {str(e)}")
-        return (f"{datetime.now()}: Error retrieving youtube wave file from Azure instance : {url}") """
-
 #### Fixing code to resolve 404 error
 
 def fetch_audio_from_youtube(youtube_url: str) -> str:
@@ -176,6 +159,7 @@ def fetch_audio_from_youtube(youtube_url: str) -> str:
     - Falls back to sending youtube_url in JSON body if needed.
     - Accepts either JSON {"audio_url": "..."} or a plain string URL.
     """
+    EXTRACT_API = os.getenv("AZURE_CONTAINER_APP_FQDN") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
     base = EXTRACT_API.rstrip("/")
     endpoint = base if base.endswith("/extract") else f"{base}/extract"
 
@@ -255,16 +239,14 @@ def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
                 if CheckURL:
                     # Get the transcription from youtube
                     # text_input = Youtubetranscription_summarizer.main(url.strip()) # Youtube files are transcribed and summarized
-                    extract_input = extract(url.strip()) # Youtube files are extracted from Azure instance.
-                    # Test wav file transcription using faster-whisper
-                    #audio_wav = fetch_audio_from_youtube(extract_input['audio_url'])
-                    audio_wav = fetch_audio_from_youtube(extract_input)
-                    #file_path = "/Users/sayedarizvi/AudioSummarizer/Data/test.wav"
-                    #audio_wav = file_path
-                    text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_wav, model_name="base.en")
-                    #text_input = transcript['segments']
-                    #audio_path = text_input['audio_filepath']
-                    #tmp_to_cleanup.append(text_input)
+                    #extract_input = extract(url.strip()) # Call for local testing
+                    # Test wav file transcription using faster-whisper # Call for local testing
+                    #audio_wav = fetch_audio_from_youtube(extract_input) # Call for local testing
+                    audio_wav = fetch_audio_from_youtube(url.strip()) # Server API call
+                    #file_path = "/Users/sayedarizvi/AudioSummarizer/Data/test.wav" # Call for local testing
+                    #audio_wav = file_path # Call for local testing
+                    #text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(extract_input, model_name="base.en")# Call for local testing
+                    text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_wav, model_name="base.en") #Call for server testing
                     tmp_to_cleanup.append(text_input)
                 else:   
                     audio_path = download_to_temp_mp3(url.strip())

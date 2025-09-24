@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import os, uuid
 from datetime import datetime, timedelta, timezone
 from azure.identity import ManagedIdentityCredential, DefaultAzureCredential
@@ -5,8 +6,9 @@ from azure.storage.blob import (
     BlobServiceClient, generate_blob_sas, BlobSasPermissions
 )
 
-ACCOUNT_NAME = os.environ["AZURE_STORAGE_ACCOUNT"]
-CONTAINER = os.environ["AZURE_BLOB_CONTAINER"]
+load_dotenv()
+ACCOUNT_NAME = os.getenv("AZURE_STORAGE_ACCOUNT")
+CONTAINER = os.getenv("AZURE_BLOB_CONTAINER")
 
 # Use Managed Identity in Azure; locally DefaultAzureCredential also works
 def _credential():
