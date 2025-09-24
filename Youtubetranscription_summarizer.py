@@ -191,13 +191,16 @@ def download_youtube_audio_wav16k_api(
 
 
 def transcribe_faster_whisper(wav_path:str, model_name="base.en"):
-    model = WhisperModel(model_name)
-    segments, info = model.transcribe(wav_path, beam_size=1, vad_filter=True)
-    out = []
-    for s in segments:
-        out.append({"start": s.start, "end": s.end, "text": s.text})
-    #return {"language": info.language, "segments": out}
-    return {"segments": out}
+    try:
+        model = WhisperModel(model_name)
+        segments, info = model.transcribe(wav_path, beam_size=1, vad_filter=True)
+        out = []
+        for s in segments:
+            out.append({"start": s.start, "end": s.end, "text": s.text})
+        #return {"language": info.language, "segments": out}
+        return {"segments": out}
+    except Exception as e:
+        return f"Faster-Whisper transcription failed: {e}"
 
 def summarize_with_phi(transcript_segments, sysprompt, userprompt, phi_client):
     # map-reduce pseudo:
