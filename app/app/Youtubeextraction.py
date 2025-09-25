@@ -94,6 +94,8 @@ def extract(
     cookies_path = retrieve_file_path("cookies.txt")
     if not cookies_path:
         cookies_path = None
+        print("Cookie file NOT found in container!")
+        return f"User authentication cookie file NOT found in container! Please try again later."
 
     ydl_opts = {
         "cookiefile": cookies_path,
@@ -108,6 +110,7 @@ def extract(
             }
         ],
         "quiet": quiet,
+        "verbose": not quiet,
         "no_warnings": quiet,
         "progress_hooks": hooks,
     }
