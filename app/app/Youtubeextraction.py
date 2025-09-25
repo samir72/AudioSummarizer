@@ -92,6 +92,7 @@ def extract(
     hooks = [progress_hook] if progress_hook else []
     ### Use cookies.txt if available
     cookies_path = retrieve_file_path("cookies.txt")
+    #cookies_path = "./app/utils/cookies.txt"
     if not cookies_path:
         cookies_path = None
         print("Cookie file NOT found in container!")
