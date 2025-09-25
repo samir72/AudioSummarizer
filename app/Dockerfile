@@ -1,6 +1,6 @@
 # ---------- Base ----------
 #FROM python:3.11-slim
-FROM mcr.microsoft.com/python:3.11
+FROM cab337fa40e5acr.azurecr.io/python:3.11-slim
 
 # ---------- System deps ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
