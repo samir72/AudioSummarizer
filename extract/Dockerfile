@@ -13,7 +13,7 @@ WORKDIR /workspace
 # ---------- Python deps ----------
 # requirements.txt is at AUDIOSUMMARIZER/extract/requirements.txt
 
-COPY extract/app/requirements.txt .
+COPY app/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
 && pip install --no-cache-dir -r requirements.txt
 
