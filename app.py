@@ -239,14 +239,14 @@ def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
                 if CheckURL:
                     # Get the transcription from youtube
                     # text_input = Youtubetranscription_summarizer.main(url.strip()) # Youtube files are transcribed and summarized
-                    #extract_input = extract(url.strip()) # Call for local testing
+                    extract_input = extract(url.strip()) # Call for local testing
                     # Test wav file transcription using faster-whisper # Call for local testing
                     #audio_wav = fetch_audio_from_youtube(extract_input) # Call for local testing
-                    audio_wav = fetch_audio_from_youtube(url.strip()) # Server API call
+                    #audio_wav = fetch_audio_from_youtube(url.strip()) # Server API call
                     #file_path = "/Users/sayedarizvi/AudioSummarizer/Data/test.wav" # Call for local testing
                     #audio_wav = file_path # Call for local testing
-                    #text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(extract_input, model_name="base.en")# Call for local testing
-                    text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_wav, model_name="base.en") #Call for server testing
+                    text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(extract_input, model_name="base.en")# Call for local testing
+                    #text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_wav, model_name="base.en") #Call for server testing
                     tmp_to_cleanup.append(text_input)
                 else:   
                     audio_path = download_to_temp_mp3(url.strip())

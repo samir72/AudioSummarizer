@@ -6,6 +6,7 @@ import yt_dlp
 # from utils.storage import upload_and_sign   # To remove circular import issue
 from extract.utils.storage import upload_and_sign  # To remove circular import issue
 from extract.utils.retrieve_filepath import retrieve_file_path # To get the file path of cookies.txt
+from extract.utils.cookies_refresher import start_cookies_refresher # To refresh cookies.txt periodically
 
 app = FastAPI()
 
@@ -91,8 +92,11 @@ def extract(
     out_template = str(work_dir / "%(title).100B [%(id)s].%(ext)s")
     hooks = [progress_hook] if progress_hook else []
     ### Use cookies.txt if available
-    cookies_path = retrieve_file_path("cookies.txt")
+    #cookies_path = retrieve_file_path("cookies.txt")
     #cookies_path = "./app/utils/cookies.txt"
+    # Call the cookies refresher to start refreshing cookies in background
+    start_cookies_refresher()
+    cookies_path = os.getenv("COOKIES_PATH")
     if not cookies_path:
         cookies_path = None
         print("Cookie file NOT found in container!")
