@@ -31,7 +31,7 @@ def nslookup(domain):
         #     print(f"IP Address: {ip}")
     except socket.gaierror as e:
         print(f"DNS lookup failed for {domain}: {e}")
-        return False
+        return True # Assume true as youtube DNS will fail on huggingface
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return False
