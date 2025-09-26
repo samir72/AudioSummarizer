@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional, Callable, Any
 import yt_dlp
 from faster_whisper import WhisperModel
+import socket
 
 
 def main(url:str):
@@ -17,8 +18,6 @@ def main(url:str):
     #print(json.dumps(transcript, indent=2))
     #Summarize the transcript using Phi
     return transcript
-
-import socket
 
 def nslookup(domain):
     try:

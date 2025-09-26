@@ -11,22 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 # ---------- Python deps ----------
-# requirements.txt is at AUDIOSUMMARIZER/app/requirements.txt
-#COPY requirements.txt /tmp/requirements.txt
-#RUN pip install --no-cache-dir --upgrade pip \
-# && pip install --no-cache-dir -r /tmp/requirements.txt \
- # ensure yt-dlp available even if not pinned
-# && pip install --no-cache-dir yt-dlp
+# requirements.txt is at AUDIOSUMMARIZER/extract/requirements.txt
 
-COPY app/requirements.txt .
+COPY extract/app/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
 && pip install --no-cache-dir -r requirements.txt
 
 # ---------- App code ----------
-# Copy EVERYTHING under AUDIOSUMMARIZER/app (includes subfolders: app/ and utils/)
-COPY . /workspace/app
+# Copy EVERYTHING under AUDIOSUMMARIZER/extract (includes subfolders: app/ and utils/)
+COPY . /workspace/extract
 
-# Make /workspace importable so "app.app.Youtubeextraction" & "app.utils..." work
+# Make /workspace importable so "extract.app.Youtubeextraction" & "app.utils..." work
 ENV PYTHONPATH=/workspace
 
 # Runtime env (override at deploy)
@@ -37,5 +32,5 @@ ENV AZURE_BLOB_CONTAINER=__SET_AT_DEPLOY__
 
 EXPOSE 8080
 
-# Your ASGI app is defined in app/app/Youtubeextraction.py as `app = FastAPI()`
-CMD ["uvicorn", "app.app.Youtubeextraction:app", "--host", "0.0.0.0", "--port", "8080"]
+# Your ASGI app is defined in extract/app/Youtubeextraction.py as `app = FastAPI()`
+CMD ["uvicorn", "extract.app.Youtubeextraction:app", "--host", "0.0.0.0", "--port", "8080"]

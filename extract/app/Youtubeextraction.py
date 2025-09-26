@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Optional, Callable, Any
 import yt_dlp
 # from utils.storage import upload_and_sign   # To remove circular import issue
-from app.utils.storage import upload_and_sign  # To remove circular import issue
-from app.utils.retrieve_filepath import retrieve_file_path # To get the file path of cookies.txt
+from extract.utils.storage import upload_and_sign  # To remove circular import issue
+from extract.utils.retrieve_filepath import retrieve_file_path # To get the file path of cookies.txt
 
 app = FastAPI()
 
