@@ -280,7 +280,7 @@ with gr.Blocks(title="Audio Summarizer") as demo:
     gr.Markdown("# Audio File Summarizer (Azure OpenAI)")
     gr.Markdown("Upload an mp3(**YouTube is the new feature add**), record audio, or paste a URL, use the default user prompt and system prompt and  click 'Summarize'.")
     gr.Markdown("Users are encouraged to modify the user and system prompts to suit their needs.")
-
+    gr.Markdown("**Responsible Use**: This project is for educational and research purposes only. It does not intend to violate copyright, YouTube’s Terms of Service, or data rights. Users are responsible for ensuring compliance with applicable laws and platform policies when processing audio or video content. AudioSummarizer is designed as a learning tool to explore AI summarization workflows, not as a commercial service.")
     with gr.Row():
         with gr.Column():
             upload_audio = gr.Audio(sources=["upload"], type="filepath", label="Upload mp3")
@@ -343,7 +343,10 @@ with gr.Blocks(title="Audio Summarizer") as demo:
         fn=process_audio,
         inputs=[upload_audio, record_audio, url_input, sysprompt_input, userprompt_input],
         outputs=output,
+    
+    
     )
+
 
 if __name__ == "__main__":
     demo.launch()
