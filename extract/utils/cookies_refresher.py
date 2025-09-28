@@ -4,11 +4,11 @@ from azure.storage.blob import BlobClient
 from dotenv import load_dotenv
 
 load_dotenv()
-ACCOUNT  = os.getenv("AZURE_STORAGE_ACCOUNT")  # storage account name
-CONTAINER= os.getenv("COOKIES_CONTAINER")
-BLOB     = os.getenv("COOKIES_BLOB")
-OUT_PATH = os.getenv("COOKIES_PATH")
-REFRESH  = int(os.getenv("COOKIES_REFRESH_SEC"))
+ACCOUNT  = os.getenv("AZURE_STORAGE_ACCOUNT","yt-extractor-rg")  # storage account name
+CONTAINER= os.getenv("COOKIES_CONTAINER","cookies")        # container name
+BLOB     = os.getenv("COOKIES_BLOB","cookies.txt")     # blob name
+OUT_PATH = os.getenv("COOKIES_PATH","/tmp/cookies.txt")  # local path to write cookies
+REFRESH = int(os.getenv("COOKIES_REFRESH_SEC", "600"))  # Default to 10 minutes
 
 def _sha256(b: bytes) -> str: return hashlib.sha256(b).hexdigest()
 def _read(path: str) -> bytes:

@@ -7,8 +7,8 @@ from azure.storage.blob import (
 )
 
 load_dotenv()
-ACCOUNT_NAME = os.getenv("AZURE_STORAGE_ACCOUNT")
-CONTAINER = os.getenv("AZURE_BLOB_CONTAINER")
+ACCOUNT_NAME = os.getenv("AZURE_STORAGE_ACCOUNT","ytstore7135")
+CONTAINER = os.getenv("AZURE_BLOB_CONTAINER","audio")
 
 # Use Managed Identity in Azure; locally DefaultAzureCredential also works
 def _credential():

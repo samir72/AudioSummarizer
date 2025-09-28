@@ -97,6 +97,7 @@ def extract(
     # Call the cookies refresher to start refreshing cookies in background
     start_cookies_refresher()
     cookies_path = os.getenv("COOKIES_PATH")
+    print(f"cookies_path value: {cookies_path}")
     if not cookies_path:
         cookies_path = None
         print("Cookie file NOT found in container!")

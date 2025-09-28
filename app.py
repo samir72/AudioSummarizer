@@ -160,6 +160,7 @@ def fetch_audio_from_youtube(youtube_url: str) -> str:
     - Accepts either JSON {"audio_url": "..."} or a plain string URL.
     """
     EXTRACT_API = os.getenv("AZURE_CONTAINER_APP_FQDN") ## Fast API endpoint for youtube extraction "https://<your-app-fqdn>/extract"
+    print(f"Extract_API value: {EXTRACT_API}")
     base = EXTRACT_API.rstrip("/")
     endpoint = base if base.endswith("/extract") else f"{base}/extract"
 
