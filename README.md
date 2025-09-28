@@ -1,64 +1,127 @@
 # AudioSummarizer
 
+## What’s New (Sep 26–28, 2025)
+- **YouTube cookie refresh & expiry handling** added to avoid sign-in/download failures.  
+- **DNS lookup improvements**: automatically skip DNS failures on Hugging Face Spaces to reduce false negatives.  
+- **Azure Container App (ACA) integration**: bypasses YouTube blocking by offloading audio download to Azure, storing audio in Blob Storage, and feeding it into the HF pipeline.  
+- **Docker / ACA enhancements**: uses Microsoft slim base image in ACR for faster builds, with trade-off that the base must be regularly refreshed.  
+- **Repo restructuring**: renamed the app entry folder to `extract/` to resolve a Hugging Face build conflict.
+
+---
+
 ## Overview
-AudioSummarizer is a web application deployed on Hugging Face Spaces that summarizes audio content from multiple sources—file upload, microphone recording, or URL download (including YouTube)—using the Phi-4-multimodal-instruct LLM model on Azure for summarization. The app supports YouTube URL transcription using the faster-whisper ASR model and yt-dlp for audio extraction, with a user-friendly Gradio UI. System and user prompts are loaded from a metadata.json file to provide structured responses.
+AudioSummarizer is a web app (deployed on Hugging Face Spaces) that summarizes audio from multiple sources — file upload, microphone, or URL (YouTube / direct MP3) — using the **Phi‑4‑multimodal‑instruct** LLM model on Azure for structured summarization. The app uses **faster‑whisper** for transcription and **yt-dlp** + **ffmpeg** for audio extraction, with a clean **Gradio** UI. Prompts are loaded from `metadata.json` to ensure replies include **Summary**, **Key Details**, and **Insights**.
+
+Because Hugging Face often cannot directly fetch YouTube audio (due to network restrictions or blocking), we now route YouTube downloads through an **Azure Container App** which:
+
+1. Fetches the YouTube audio independently.  
+2. Stores the processed 16 kHz mono WAV file in **Azure Blob Storage**.  
+3. Serves that file into the usual transcription/summarization pipeline in the HF app.
+
+Thus, the HF interface remains unchanged to users, but YouTube support is restored reliably via Azure.
+
+---
 
 ## Features
-- Upload a local MP3 file, record audio via microphone, or provide a YouTube or standard MP3 URL.
-- Create your own system and user prompts.
-- Transcribes YouTube videos using faster-whisper and summarizes audio or text using Phi-4-multimodal-instruct on Azure.
-- Configurable system and user prompts, with defaults loaded from metadata.json for structured output (Summary, Key Details, Insights).
-- Clean and minimal Gradio UI for easy interaction.
-- Environment-based configuration using API key authentication for Azure.
-- YouTube audio extraction to 16 kHz mono WAV using yt-dlp and ffmpeg.
-- DNS lookup for URL validation and robust error handling for YouTube processing.
+- Upload a local MP3 file, record via microphone, or enter a YouTube / MP3 URL.  
+- **Azure Container App support** so YouTube content is reliably processed even if Hugging Face cannot fetch it.  
+- Prompts fully customizable: you may define system and user prompts stored in `metadata.json`.  
+- Transcription using **faster-whisper**, summarization through **Phi‑4‑multimodal-instruct** (Azure).  
+- Clean and minimal **Gradio** UI for intuitive interaction.  
+- Configuration via environment variables (`.env`) for Azure endpoint, deployment name, API key, etc.  
+- YouTube audio extraction to **16 kHz mono WAV** (via yt-dlp + ffmpeg).  
+- DNS‑based URL validation, with automatic skip of DNS errors in HF Spaces to reduce false rejections.
 
-## Architecture Overview
-```
- ┌───────────────┐     file/mic/url     ┌───────────────────────┐
- │   Gradio UI   │  ──────────────────▶ │  process_audio(...)    │
- └──────┬────────┘                      └──────────┬─────────────┘
-        │                                        validates/reads
-        │                             ┌───────────────────────────┐
-        │                             │ encode_audio(...)         │
-        │                             │ download_to_temp_mp3(...) │
-        │                             |                           |
-        │                             └──────────┬────────────────┘
-        │                                        │ base64 audio/text
-        ▼                                        ▼
- ┌───────────────────────────┐        ┌─────────────────────────────┐
- │ summarize_input(audio,...)│  ───▶  │ Azure Phi-4-multimodal-instruct → │
- └───────────────────────────┘        │ Chat Completions           │
-                                     │ (multimodal: text + audio)  │
-                                     └─────────────────────────────┘
+---
 
- YouTube Path:
- ┌───────────────┐     YouTube URL     ┌───────────────────────────┐
- │   Gradio UI   │  ──────────────────▶ │ download_youtube_audio_wav16k_api(...) │
- └───────────────┘                      └──────────┬────────────────┘
-                                                │ 16kHz mono WAV
-                                                ▼
-                                     ┌─────────────────────────────┐
-                                     │ transcribe_faster_whisper(...) │
-                                     └──────────┬────────────────┘
-                                                │ transcribed text
-                                                ▼
-                                     ┌─────────────────────────────┐
-                                     │ Azure Phi-4-multimodal-instruct → │
-                                     │ Chat Completions           │
-                                     │ (multimodal: text)          │
-                                     └─────────────────────────────┘
+## Architecture / Data Flow
+
 ```
+User Input (YouTube) ──▶ Hugging Face UI
+   │
+   └── If URL is YouTube:
+         ─▶ forwarded to Azure Container App
+               ├── ACA downloads YouTube audio (yt-dlp)
+               └── Converts/stores WAV in Azure Blob Storage
+         ─▶ HF app fetches WAV from Blob Storage
+               ├── Transcribe via faster-whisper
+               └── Summarize via Azure Phi‑4
+               
+
+ ┌───────────────┐ file/mic/url ┌───────────────────────────┐
+ │   Gradio UI   │─────────────▶│ process_audio(...)         │
+ └──────┬────────┘              └──────────┬─────────────────┘
+        │ validates/reads                  │
+        ▼                                  ▼
+ ┌───────────────────────────┐   ┌─────────────────────────────┐
+ │ summarize_input(audio,...)│──▶│ Azure Phi-4-multimodal-instr │
+ └───────────────────────────┘   │ Chat Completions (text+audio)│
+                                 └─────────────────────────────┘
+
+ YouTube Path (via ACA):
+ ┌───────────────┐  YouTube URL ┌──────────────────────────────┐
+ │   Gradio UI   │────────────▶ │ Azure Container App (yt-dlp)  │
+ └───────────────┘              └──────────┬───────────────────┘
+                                           │ uploads audio
+                                           ▼
+                                ┌──────────────────────────────┐
+                                │ Azure Blob Storage (WAV 16k) │
+                                └──────────┬───────────────────┘
+                                           │
+                                           ▼
+                              ┌──────────────────────────────┐
+                              │ faster-whisper transcription │
+                              └──────────┬───────────────────┘
+                                           │ text
+                                           ▼
+                              ┌──────────────────────────────┐
+                              │ Azure Phi-4-multimodal-instr │
+                              │ summarization                │
+                              └──────────────────────────────┘
+
+```
+
+For non-YouTube inputs (local upload, mic, direct MP3 URL), the flow remains internal to the HF space: download/convert → transcription → summarization.
+
+---
+
+## Docker & Azure Container Apps
+
+### Optimization: Microsoft Slim Base in ACR
+The Docker image now uses a **Microsoft slim base image** hosted in **Azure Container Registry (ACR)** to speed up builds (less reliance on external pulls).  
+- ✅ **Advantage**: faster, more predictable builds in Azure / CI.  
+- ⚠️ **Caveat**: you must **refresh the slim base in ACR routinely** to catch upstream security patches, updates, or bug fixes.
+
+**Best Practice Recommendation:**  
+Set up a scheduled job (e.g. via ACR Task or Azure DevOps pipeline) to pull the latest Microsoft slim base and update your ACR copy on a regular cadence (e.g. weekly) so your deployed containers remain current.
+
+### Build & Run Example
+```bash
+# Build locally
+docker build -t audiosummarizer:latest .
+
+# Run container
+docker run --rm -p 7860:7860   -e AC_OPENAI_ENDPOINT=...   -e AC_MODEL_DEPLOYMENT=...   -e AC_OPENAI_API_KEY=...   -e AC_OPENAI_API_VERSION=...   audiosummarizer:latest
+```
+
+For ACA deployment:
+1. Push the Docker image to your ACR.
+2. Deploy the image via **Azure Container Apps** with necessary environment variables.
+3. The ACA will serve as the YouTube‐to‑Blob “fetcher” component, supporting the main HF app.
+
+---
 
 ## Prerequisites
-- Python 3.10 or higher.
-- An Azure subscription with access to the Phi-4-multimodal-instruct model deployed on Azure.
-- ffmpeg installed and available in PATH for YouTube audio processing.
-- A metadata.json file with system and user prompt defaults.
-- For deployment, a Hugging Face Spaces environment with packages.txt configured.
+- Python **3.10+**  
+- Azure subscription with deployment of **Phi‑4‑multimodal-instruct**  
+- `ffmpeg` installed and in `$PATH`  
+- A valid `metadata.json` containing default prompts  
+- For HF spaces: `packages.txt` including `ffmpeg`  
+
+---
 
 ## Python Dependencies
-Create a `requirements.txt` with the following:
+Add to `requirements.txt`:
 ```
 azure-identity>=1.17.1
 openai>=1.0.0
@@ -67,123 +130,99 @@ python-dotenv>=1.0.1
 requests>=2.32.3
 yt-dlp>=2024.8.6
 faster-whisper>=0.10.0
+beautifulsoup4>=4.12.2   # optional, for fallback scraping
 ```
 
-Install dependencies:
+Install as usual:
 ```bash
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # on Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## System Dependencies
-Install ffmpeg:
-- Ubuntu/Debian: `sudo apt-get install ffmpeg`
-- macOS: `brew install ffmpeg`
-- Windows: [Download from ffmpeg.org](https://ffmpeg.org) and add to PATH
-
-For Hugging Face Spaces, create a `packages.txt` file at the project root with:
-```
-ffmpeg
-```
+---
 
 ## Installation
 ```bash
-git clone https://github.com/samir72/AudioChatTranscriber.git
-cd AudioChatTranscriber
+git clone https://github.com/samir72/AudioSummarizer.git
+cd AudioSummarizer
 ```
-Install dependencies (see above).  
-Ensure ffmpeg is installed and available in PATH, or include packages.txt for Hugging Face Spaces builds.
+Install dependencies and make sure `ffmpeg` is available (or included via `packages.txt` in HF deployment).
+
+---
 
 ## Configuration
 Create a `.env` file at the project root:
 ```env
-AC_OPENAI_ENDPOINT=https://<your-resource>.openai.azure.com/
-AC_MODEL_DEPLOYMENT=<your-phi-4-multimodal-instruct-deployment-name>
-AC_OPENAI_API_KEY=<your-api-key>
-AC_OPENAI_API_VERSION=<your-api-version>
+AC_OPENAI_ENDPOINT=https://<your-azure-resource>.openai.azure.com/
+AC_MODEL_DEPLOYMENT=<your‑phi‑4 deployment name>
+AC_OPENAI_API_KEY=<your azure openai api key>
+AC_OPENAI_API_VERSION=<api version e.g. 2024-10-01>
+
 GRADIO_SERVER_NAME=127.0.0.1
 GRADIO_SERVER_PORT=7860
 ```
 
-Create a `metadata.json` file at the project root (see example in repo).
+If you’re running the Azure Container App, ensure it is configured with:
+- Proper role / access to write to Azure Blob Storage  
+- Environment variables for any keys or connection strings it needs  
+- Networking/firewall settings so the HF app can fetch from the blob store
 
-For Hugging Face Spaces, create a `packages.txt` file with:
-```
-ffmpeg
-```
+---
 
 ## Usage
-Run locally:
+Run the app:
 ```bash
 python app.py
 ```
-Open the URL printed by Gradio (default: [http://127.0.0.1:7860](http://127.0.0.1:7860)) or visit the Hugging Face Spaces deployment.
+Then open your browser to [http://127.0.0.1:7860](http://127.0.0.1:7860) or use your HF Space URL.
 
-### Input Methods
-- Upload an MP3 file
-- Record audio via microphone
-- Enter a YouTube or standard MP3 URL
-- Modify system/user prompts (defaults loaded from `metadata.json`)
-- Click **Summarize** to view the structured response
+### Input options
+- Upload MP3 file  
+- Record via microphone  
+- Enter a YouTube / direct MP3 URL  
+- Modify system/user prompts (via `metadata.json`)  
+- Click **Summarize** → get structured output (Summary, Key Details, Insights)
 
-## Code Walkthrough
-- `process_audio(...)`: Orchestrates input selection and summarization
-- `encode_audio_from_path(...)`: Encodes audio files to Base64
-- `download_to_temp_mp3(...)`: Downloads MP3 URLs to temporary files
-- `download_youtube_audio_wav16k_api(...)`: Converts YouTube audio to 16 kHz mono WAV
-- `transcribe_faster_whisper(...)`: Transcribes audio
-- `summarize_input(...)`: Calls Azure Phi-4-multimodal-instruct Chat Completions
-- `retrieve_json_record(...)`: Loads prompts from metadata.json
-- `nslookup(...)`: Validates URL domains
-- `ensure_ffmpeg(...)`: Verifies ffmpeg availability
-
-## Troubleshooting
-- Credential errors → Verify API key and Azure resource
-- Deployment not found → Confirm model deployment name
-- HTTP 403/401 → Check key permissions
-- Misconfiguration → Validate `.env` values
-- YouTube errors → Verify yt-dlp + ffmpeg installation
-- Metadata errors → Ensure JSON structure is valid
-
-## Improvements & TODOs
-- Standardize audio format handling
-- Improve error handling & feedback
-- Multi-turn conversation support
-- Metadata validation
-- Chunked summarization for long YouTube videos
-
-## Project Structure
-```
-.
-├── app.py
-├── Youtubetranscription_summarizer.py
-├── requirements.txt
-├── .env
-├── metadata.json
-├── packages.txt
-├── README.md
-└── LICENSE
-```
+---
 
 ## Contributing
-Contributions are welcome!
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/your-feature-name`)
-3. Commit changes (`git commit -m "Add feature"`)
-4. Push to branch (`git push origin feature/your-feature-name`)
-5. Open a pull request
+We welcome your improvements—especially around cloud integration, performance, and reliability.
+
+**Suggested contribution areas:**
+- Better error handling for cookie expiry, fallback strategies 
+- Enhancements to the Azure Container App + Blob Storage pipeline  
+- Caching / sync between ACA and the HF app  
+- Automation of **ACR slim base refresh**  
+ 
+
+**How to contribute:**
+1. Fork the repository  
+2. Create a feature branch (e.g. `git checkout -b feat/xyz`)  
+3. Commit changes with meaningful messages  
+4. Push and open a Pull Request  
+
+Please reference this `README.md` when describing how the YouTube → ACA → Blob → HF flow works.
+
+---
 
 ## License
-MIT License - see [LICENSE](./LICENSE)
+This project is licensed under the **MIT License** — see [LICENSE](./LICENSE) for details.
+
+---
 
 ## Acknowledgments
-- Built with **Gradio** for UI  
-- Deployed on **Hugging Face Spaces**
+- Built with **Gradio** for UI 
+- Application deployed on **Hugging Face Spaces**
+- ACA deployed on **Azure**
+- Application layer on ACA served by **FastAPI** 
 - Intelligence by **Azure Phi-4-multimodal-instruct**  
 - YouTube audio extraction with **yt-dlp**  
-- Transcription enabled by **faster-whisper**  
+- Transcription enabled by **faster-whisper**
+
+---
 
 
 ## Contact
-For questions or feedback, contact Sayed Amir Rizvi @ syedamirhusain@gmail.com
+For questions or feedback, reach out to **Sayed Amir Rizvi**  
+Email: syedamirhusain@gmail.com  
