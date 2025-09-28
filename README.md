@@ -1,7 +1,7 @@
 # AudioSummarizer
 
 ## Overview
-AudioSummarizer is a web application deployed on Hugging Face Spaces that summarizes audio content from multiple sources—file upload, microphone recording, or URL download (including YouTube)—using the Phi-4-multimodal-instruct model deployed on Azure for summarization of audio and transcribed text. The app supports YouTube URL transcription using the faster-whisper model and yt-dlp for audio extraction, with a user-friendly Gradio UI. System and user prompts are loaded from a metadata.json file to provide structured responses.
+AudioSummarizer is a web application deployed on Hugging Face Spaces that summarizes audio content from multiple sources—file upload, microphone recording, or URL download (including YouTube)—using the Phi-4-multimodal-instruct LLM model on Azure for summarization. The app supports YouTube URL transcription using the faster-whisper ASR model and yt-dlp for audio extraction, with a user-friendly Gradio UI. System and user prompts are loaded from a metadata.json file to provide structured responses.
 
 ## Features
 - Upload a local MP3 file, record audio via microphone, or provide a YouTube or standard MP3 URL.
