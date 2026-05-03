@@ -1,5 +1,10 @@
 # AudioSummarizer
 
+## What’s New (May 3, 2026)
+- **Gradio upgraded to 5.46.1** to resolve a pip dependency conflict between `gradio==5.45.0` and `gradio==5.46.1`.
+
+---
+
 ## What’s New (Sep 26–28, 2025)
 - **YouTube cookie refresh & expiry handling** added to avoid sign-in/download failures.  
 - **DNS lookup improvements**: automatically skip DNS failures on Hugging Face Spaces to reduce false negatives.  
