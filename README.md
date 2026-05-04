@@ -1,7 +1,20 @@
+---
+title: AudioSummarizer
+emoji: 📚
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: 6.0.2
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # AudioSummarizer
 
 ## What’s New (May 3, 2026)
 - **Gradio upgraded to 5.46.1** to resolve a pip dependency conflict between `gradio==5.45.0` and `gradio==5.46.1`.
+- **GitHub Actions CI/CD workflow added** — every push to `main` automatically syncs the repo to the Hugging Face Space (`samir72/AudioChatTranscriber`). Requires an `HF_TOKEN` secret configured in the GitHub repository settings.
 
 ---
 
@@ -87,6 +100,19 @@ User Input (YouTube) ──▶ Hugging Face UI
 ```
 
 For non-YouTube inputs (local upload, mic, direct MP3 URL), the flow remains internal to the HF space: download/convert → transcription → summarization.
+
+---
+
+## CI/CD — GitHub Actions
+
+A workflow at `.github/workflows/main.yml` runs on every push to `main` (and can be triggered manually via `workflow_dispatch`).
+
+**What it does:**
+1. Checks out the repo with a shallow clone (no LFS, no full history).
+2. Creates a clean orphan branch — only the current file state, no large-file history.
+3. Force-pushes that branch to the `main` branch of the Hugging Face Space `samir72/AudioChatTranscriber`.
+
+**Setup requirement:** Add an `HF_TOKEN` secret in **GitHub → Settings → Secrets and variables → Actions** with a Hugging Face token that has write access to the Space.
 
 ---
 
