@@ -210,7 +210,6 @@ def fetch_audio_from_youtube(youtube_url: str) -> str:
         
 def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
     tmp_to_cleanup = []
-    audio_b64 = None
     text_input = None
     domaincheck = None
     extract_input = None
@@ -256,10 +255,11 @@ def process_audio(upload_path, record_path, url, sys_prompt, user_prompt):
                 return f"DNS lookup failed for {domain}"
         if not audio_path and text_input is None:
             return "Please provide content via upload, recording, or URL."
-        # If we have an audio file, encode it
+        # Transcribe audio to text via faster-whisper before sending to gpt-4o-mini
+        # (gpt-4o-mini only accepts text/image_url content blocks, not audio)
         if audio_path:
-            audio_b64 = encode_audio_from_path(audio_path)
-        return summarize_input(audio_b64, text_input, sys_prompt, user_prompt, Starttime)
+            text_input = Youtubetranscription_summarizer.transcribe_faster_whisper(audio_path, model_name="base.en")
+        return summarize_input(None, text_input, sys_prompt, user_prompt, Starttime)
 
     except Exception as e:
         return print(f"Error processing audio at {datetime.now()}: prompt_length={len(user_prompt)}, audio_path={audio_path}: {str(e)}")
