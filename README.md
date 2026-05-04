@@ -16,6 +16,7 @@ license: mit
 - **Gradio upgraded to 5.46.1** to resolve a pip dependency conflict between `gradio==5.45.0` and `gradio==5.46.1`.
 - **GitHub Actions CI/CD workflow added** — every push to `main` automatically syncs the repo to the Hugging Face Space (`samir72/AudioChatTranscriber`). Requires an `HF_TOKEN` secret configured in the GitHub repository settings.
 - **Model switched to gpt-4o-mini** — replaced Phi-4-multimodal-instruct with `gpt-4o-mini` via Azure OpenAI to resolve `DeploymentNotFound` errors. Set `AC_MODEL_DEPLOYMENT=gpt-4o-mini` in your environment or HF Space secrets.
+- **Audio pipeline updated for gpt-4o-mini compatibility** — `gpt-4o-mini` does not support native audio content blocks. All audio inputs (upload, microphone, direct MP3 URL) are now transcribed locally via **faster-whisper** before being sent to the model as text, eliminating the `400 invalid_request_error`.
 
 ---
 
