@@ -15,6 +15,7 @@ license: mit
 ## What’s New (May 3, 2026)
 - **Gradio upgraded to 5.46.1** to resolve a pip dependency conflict between `gradio==5.45.0` and `gradio==5.46.1`.
 - **GitHub Actions CI/CD workflow added** — every push to `main` automatically syncs the repo to the Hugging Face Space (`samir72/AudioChatTranscriber`). Requires an `HF_TOKEN` secret configured in the GitHub repository settings.
+- **Model switched to gpt-4o-mini** — replaced Phi-4-multimodal-instruct with `gpt-4o-mini` via Azure OpenAI to resolve `DeploymentNotFound` errors. Set `AC_MODEL_DEPLOYMENT=gpt-4o-mini` in your environment or HF Space secrets.
 
 ---
 
@@ -28,7 +29,7 @@ license: mit
 ---
 
 ## Overview
-AudioSummarizer is a web app (deployed on Hugging Face Spaces) that summarizes audio from multiple sources — file upload, microphone, or URL (YouTube / direct MP3) — using the **Phi‑4‑multimodal‑instruct** LLM model on Azure for structured summarization. The app uses **faster‑whisper** for transcription and **yt-dlp** + **ffmpeg** for audio extraction, with a clean **Gradio** UI. Prompts are loaded from `metadata.json` to ensure replies include **Summary**, **Key Details**, and **Insights**.
+AudioSummarizer is a web app (deployed on Hugging Face Spaces) that summarizes audio from multiple sources — file upload, microphone, or URL (YouTube / direct MP3) — using **gpt-4o-mini** via Azure OpenAI for structured summarization. The app uses **faster‑whisper** for transcription and **yt-dlp** + **ffmpeg** for audio extraction, with a clean **Gradio** UI. Prompts are loaded from `metadata.json` to ensure replies include **Summary**, **Key Details**, and **Insights**.
 
 Because Hugging Face often cannot directly fetch YouTube audio (due to network restrictions or blocking), we now route YouTube downloads through an **Azure Container App** which:
 
@@ -44,7 +45,7 @@ Thus, the HF interface remains unchanged to users, but YouTube support is restor
 - Upload a local MP3 file, record via microphone, or enter a YouTube / MP3 URL.  
 - **Azure Container App support** so YouTube content is reliably processed even if Hugging Face cannot fetch it.  
 - Prompts fully customizable: you may define system and user prompts stored in `metadata.json`.  
-- Transcription using **faster-whisper**, summarization through **Phi‑4‑multimodal-instruct** (Azure).  
+- Transcription using **faster-whisper**, summarization through **gpt-4o-mini** (Azure OpenAI).  
 - Clean and minimal **Gradio** UI for intuitive interaction.  
 - Configuration via environment variables (`.env`) for Azure endpoint, deployment name, API key, etc.  
 - YouTube audio extraction to **16 kHz mono WAV** (via yt-dlp + ffmpeg).  
@@ -63,7 +64,7 @@ User Input (YouTube) ──▶ Hugging Face UI
                └── Converts/stores WAV in Azure Blob Storage
          ─▶ HF app fetches WAV from Blob Storage
                ├── Transcribe via faster-whisper
-               └── Summarize via Azure Phi‑4
+               └── Summarize via Azure gpt-4o-mini
                
 
  ┌───────────────┐ file/mic/url ┌───────────────────────────┐
@@ -72,7 +73,7 @@ User Input (YouTube) ──▶ Hugging Face UI
         │ validates/reads                  │
         ▼                                  ▼
  ┌───────────────────────────┐   ┌─────────────────────────────┐
- │ summarize_input(audio,...)│──▶│ Azure Phi-4-multimodal-instr │
+ │ summarize_input(audio,...)│──▶│ Azure gpt-4o-mini │
  └───────────────────────────┘   │ Chat Completions (text+audio)│
                                  └─────────────────────────────┘
 
@@ -93,7 +94,7 @@ User Input (YouTube) ──▶ Hugging Face UI
                                            │ text
                                            ▼
                               ┌──────────────────────────────┐
-                              │ Azure Phi-4-multimodal-instr │
+                              │ Azure gpt-4o-mini │
                               │ summarization                │
                               └──────────────────────────────┘
 
@@ -144,7 +145,7 @@ For ACA deployment:
 
 ## Prerequisites
 - Python **3.10+**  
-- Azure subscription with deployment of **Phi‑4‑multimodal-instruct**  
+- Azure subscription with deployment of **gpt-4o-mini**  
 - `ffmpeg` installed and in `$PATH`  
 - A valid `metadata.json` containing default prompts  
 - For HF spaces: `packages.txt` including `ffmpeg`  
@@ -247,7 +248,7 @@ This project is licensed under the **MIT License** — see [LICENSE](./LICENSE) 
 - Application deployed on **Hugging Face Spaces**
 - ACA deployed on **Azure**
 - Application layer on ACA served by **FastAPI** 
-- Intelligence by **Azure Phi-4-multimodal-instruct**  
+- Intelligence by **Azure gpt-4o-mini**  
 - YouTube audio extraction with **yt-dlp**  
 - Transcription enabled by **faster-whisper**
 
